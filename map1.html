@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID Rate in US</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="css/style.css"/>    
+    <style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+    }
+
+    #chloro-legend {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 110px;
+        background: #e0ecf4;  /* Adjusted background color */
+        margin-right: 20px;
+        margin-bottom: 40px;
+        padding: 10px 20px 10px 10px;
+        border-radius: 3px;
+        text-align: center;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    #title {
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin-top: 20px;
+        margin-left: 20px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 25pt;
+        color: white;
+        z-index: 1
+    }
+
+    #subtitle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        margin-top: 70px;
+        margin-left: 190px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 15pt;
+        color: white;
+        z-index: 1
+    }
+    </style>
+</head>
+
+<body>
+<div id="title">
+    COVID Rates in US    
+</div>
+<div id="subtitle">
+    2020
+</div>
+<div id="map"></div>
+<div id="chloro-legend"></div>
+
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoiai1zb2wiLCJhIjoiY2xwZ2dzZnB1MXAzMTJqa3h6N3FwMzV4MyJ9.H7OMYIvSoi81DyeBVsffMA';
+
+    let map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v10',
+        center: [-98.5795, 39.8283],
+        zoom: 4
+    });
+
+ 
+    map.on('load', () => {
+        map.addSource('counties', {
+            type: 'geojson',
+            data: 'assets/us-covid-2020-rates.json'
+        });
+
+        map.addLayer({
+            'id': 'county-fill',
+            'type': 'fill',
+            'source': 'counties',
+            'paint': {
+                'fill-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'rates'],
+                    0, '#e0ecf4',
+                    50, '#9ebcda',
+                    100, '#8856a7'
+                ],
+                'fill-opacity': 0.6
+            }
+        });
+
+        map.addLayer({
+            'id': 'county-borders',
+            'type': 'line',
+            'source': 'counties',
+            'paint': {
+                'line-color': '#333',
+                'line-width': 0.5
+            }
+        });
+        map.on('click', 'county-fill', (event) => {
+        new mapboxgl.Popup()
+            .setLngLat(event.lngLat)
+            .setHTML(`<strong>Rate:</strong> ${event.features[0].properties.rates}`)
+            .addTo(map);
+    });
+    });
+    const chloroLegend = document.getElementById('chloro-legend');
+    const chloroLabels = ['<strong>Rate per 100,000</strong>', '0', '50', '100'];
+    const chloroColors = ['#e0ecf4', '#e0ecf4', '#9ebcda', '#8856a7'];
+    for (let i = 0; i < chloroLabels.length; i++) {
+        chloroLegend.innerHTML += `<p><span style="background-color: ${chloroColors[i]}; width: 10px; height: 10px; display: inline-block; margin-right: 5px;"></span>${chloroLabels[i]}</p>`;
+    }
+    const chloroSource = '<p style="text-align: right; font-size:10pt">Source:  <a href="https://data.census.gov/table/ACSDP5Y2018.DP05?g=0100000US$050000&d=ACS%205-Year%20Estimates%20Data%20Profiles&hidePreview=true">US Census Bureau</a></p>';
+    chloroLegend.innerHTML += chloroSource;
+    document.getElementById('map').appendChild(chloroLegend);
+</script>
+
+</body>
+</html>

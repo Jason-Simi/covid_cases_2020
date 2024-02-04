@@ -1,0 +1,99 @@
+!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Covid Counts in US</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css"/>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js"></script>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="legend"></div>
+    <div id="title">
+        Covid Counts in US
+    </div>
+    <div id="subtitle">
+        2020
+    </div>
+    <script src="js/main.js">
+    mapboxgl.accessToken =
+    'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN_jehvw';
+let map = new mapboxgl.Map({
+    container: 'map', 
+    style: 'mapbox://styles/mapbox/dark-v10',
+    zoom: 2.5, 
+    minZoom: 4, 
+    center: [-98.5795, 39.8283] 
+});
+const grades = [4, 5, 6],
+    colors = ['#e7e1ef', '#c994c7', '#dd1c77'],
+    radii = [5, 15, 20];
+
+map.on('load', () => { 
+    map.addSource('covid', {
+        type: 'geojson',
+        data: 'assets/us-covid-2020-counts.json'
+    });
+    map.addLayer({
+            'id': 'covid-point',
+            'type': 'circle',
+            'source': 'covid',
+            'paint': {
+                'circle-radius': {
+                    'property': 'cases',
+                    'stops': [
+                        [1, 2],
+                        [10, 5],
+                        [100, 7],
+                        [1000, 10],
+                        [10000, 15]
+                    ]
+                },
+                'circle-color': {
+                    'property': 'cases',
+                    'stops': [
+                    [100, '#e7e1ef'],
+                    [500, '#e7e1ef'],
+                    [1000, '#c994c7'],
+                    [5000, '#c994c7'],
+                    [10000, '#dd1c77']
+                    ]
+                },
+                'circle-stroke-color': 'white',
+                'circle-stroke-width': 1,
+                'circle-opacity': 0.6
+            }
+        }
+    );
+    map.on('click', 'covid-point', (event) => {
+        new mapboxgl.Popup()
+            .setLngLat(event.features[0].geometry.coordinates)
+            .setHTML(`<strong>Cases:</strong> ${event.features[0].properties.cases}`)
+            .addTo(map);
+    });
+});
+const legend = document.getElementById('legend');
+
+var labels = ['<strong>Cases</strong>'],
+    vbreak;
+for (var i = 0; i < grades.length; i++) {
+    vbreak = grades[i];
+    dot_radii = 2 * radii[i];
+    labels.push(
+        '<p class="break"><i class="dot" style="background:' + colors[i] + '; width: ' + dot_radii +
+        'px; height: ' +
+        dot_radii + 'px; "></i> <span class="dot-label" style="top: ' + dot_radii / 2 + 'px;">' + vbreak +
+        '</span></p>');
+}
+const source =
+    '<p style="text-align: right; font-size:10pt">Source:  <a href="https://github.com/nytimes/covid-19-data/blob/43d32dde2f87bd4dafbb7d23f5d9e878124018b8/live/us-counties.csv">New York Times</a></p>';
+legend.innerHTML = labels.join('') + source;
+    </script>
+
+</body>
+</html> 
